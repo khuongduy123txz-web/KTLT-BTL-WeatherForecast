@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT || 8080);
+const host = process.env.RENDER === 'true' ? '0.0.0.0' : '127.0.0.1';
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.ttf': 'font/ttf', '.json': 'application/json' };
 
 http.createServer(async (request, response) => {
@@ -19,4 +20,4 @@ http.createServer(async (request, response) => {
     response.writeHead(200, { 'Content-Type': types[extname(file)] || 'application/octet-stream', 'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'no-cache' });
     response.end(await readFile(file));
   } catch { response.writeHead(404).end('Not found'); }
-}).listen(port, '127.0.0.1', () => console.log(`Weather dashboard: http://localhost:${port}`));
+}).listen(port, host, () => console.log(`Weather dashboard: http://${host}:${port}`));

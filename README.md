@@ -29,6 +29,18 @@ rồi mở `http://localhost/weather-air-dashboard/`.
 Định vị cần HTTPS hoặc localhost và sự đồng ý của người dùng. Bật dịch vụ vị trí
 trên thiết bị nếu cần. Tìm thành phố luôn là lựa chọn thay thế.
 
+## Deploy lên Render
+
+Tạo **Web Service**, kết nối repo GitHub và chọn nhánh `main`:
+
+- **Build Command:** `npm install`
+- **Start Command:** `npm start`
+
+Máy chủ dùng cổng từ biến `PORT` và lắng nghe trên `0.0.0.0` khi Render tự đặt
+`RENDER=true`. Khi chạy trên máy cá nhân, máy chủ chỉ lắng nghe trên `127.0.0.1`.
+Sau khi đẩy thay đổi lên GitHub, chọn **Manual Deploy → Deploy latest commit**
+nếu dịch vụ chưa tự deploy.
+
 ## Sử dụng
 
 - Nhập tên thành phố, bấm **Tìm thành phố**, rồi chọn đúng địa điểm/quốc gia.
