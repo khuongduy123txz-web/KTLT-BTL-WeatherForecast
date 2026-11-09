@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="vi"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kiểm thử giao diện Weather & Air</title>
+<style>
+  body{margin:0;padding:18px;background:#e7ebf2;color:#172338;font:14px system-ui,sans-serif}
+  h1{font-size:20px;margin:0 0 8px}p{margin:0 0 12px}label{display:inline-flex;gap:8px;align-items:center;margin-right:16px}
+  select,button{font:inherit;min-height:44px;border:1px solid #aab8d1;border-radius:6px;background:white;padding:8px}
+  #controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:14px}#result{display:block;padding:10px 0}
+  iframe{border:1px solid #aab8d1;display:block;background:white;height:844px;max-width:none}#frame-wrap{overflow:auto;max-width:100%}
+</style>
+<h1>Kiểm thử giao diện</h1>
+<p>Dữ liệu giả lập chỉ dùng tại trang này. Ứng dụng chính luôn dùng API thật.</p>
+<div id="controls">
+  <label>Kịch bản<select id="scenario"><option value="normal">Bình thường</option><option value="air-error">AQI lỗi 503</option><option value="weather-error">Thời tiết lỗi 503</option><option value="rate-limit">Giới hạn 429</option><option value="invalid-json">JSON không hợp lệ</option><option value="offline">Ngoại tuyến không có cache</option><option value="missing">Thiếu số liệu</option><option value="night">Ban đêm</option><option value="snow">Tuyết rơi</option><option value="sun">Nắng</option><option value="race">Đổi thành phố nhanh</option></select></label>
+  <label>Chiều rộng<select id="width"><option value="1440">1440 px</option><option value="1024">1024 px</option><option value="768">768 px</option><option value="390">390 px</option><option value="320">320 px</option></select></label>
+  <button id="run" type="button">Chạy kịch bản</button><button id="inspect" type="button">Kiểm tra bố cục</button>
+</div>
+<output id="result" aria-live="polite">Chọn kịch bản rồi kiểm tra thông báo, biểu đồ và forecast.</output>
+<div id="frame-wrap"><iframe id="preview" title="Ứng dụng với dữ liệu kiểm thử"></iframe></div>
+<script type="module">
+  import { weatherFixture, airFixture, location } from './fixtures.js';
+  const frame = document.getElementById('preview');
+  const originalHTML = await (await fetch('../index.html')).text();
+  function installMocks(weather, air, scenario, place) {
+    const memory = new Map();
+    Object.defineProperty(window, 'localStorage', { configurable:true, value: { getItem:key=>memory.get(key)??null, setItem:(key,value)=>memory.set(key,value) } });
+    Object.defineProperty(navigator, 'onLine', { configurable:true, get:()=>scenario !== 'offline' });
+    window.fetch = (input, options = {}) => new Promise((resolve,reject) => {
+      const url = new URL(input);
+      const isAir = url.hostname.startsWith('air-');
+      const isGeo = url.hostname.startsWith('geocoding-');
+      const delay = scenario === 'race' ? (Number(url.searchParams.get('latitude')) < 12 ? 1200 : 80) : 80;
+      const timer = setTimeout(() => {
+        if (scenario === 'rate-limit') return resolve(new Response('{}', { status:429, headers:{'Retry-After':'60'} }));
+        if (scenario === 'weather-error' || (scenario === 'air-error' && isAir)) return resolve(new Response('{}', { status:503 }));
+        if (scenario === 'invalid-json') return resolve(new Response('not-json'));
+        if (isGeo) return resolve(new Response(JSON.stringify({results:url.searchParams.get('name').includes('zzz')?[]:[place]})));
+        resolve(new Response(JSON.stringify(isAir ? air : weather)));
+      },delay);
+      const abort = () => { clearTimeout(timer); reject(new DOMException('Aborted','AbortError')); };
+      if(options.signal?.aborted) abort(); else options.signal?.addEventListener('abort',abort,{once:true});
+    });
+  }
+  function run() {
+    const scenario = document.getElementById('scenario').value;
+    const weather = weatherFixture();
+    if(scenario==='night') weather.current.is_day=0;
+    if(scenario==='snow') weather.current.weather_code=71;
+    if(scenario==='sun') weather.current.weather_code=0;
+    if(scenario==='missing') { weather.current.temperature_2m=null; weather.current.relative_humidity_2m=null; weather.hourly.temperature_2m.fill(null); }
+    const base = new URL('../',locationHref()).href;
+    const setup = `(${installMocks.toString()})(${JSON.stringify(weather)},${JSON.stringify(airFixture())},${JSON.stringify(scenario)},${JSON.stringify(location)});`;
+    frame.style.width = document.getElementById('width').value+'px';
+    frame.srcdoc=originalHTML.replace('<head>',`<head><base href="${base}"><script>${setup}<\/script>`);
+    document.getElementById('result').textContent='Đang chạy '+scenario+' · '+frame.style.width;
+  }
+  function locationHref(){ return window.location.href; }
+  function inspect(){
+    const doc=frame.contentDocument;
+    const width=doc.documentElement.clientWidth;
+    const overflow=doc.documentElement.scrollWidth>width;
+    const cards=doc.querySelectorAll('.forecast-card').length;
+    const rows=doc.querySelectorAll('#hourly-table-body tr').length;
+    document.getElementById('result').textContent=`Viewport ${doc.defaultView.innerWidth}px · Tràn ngang toàn trang: ${overflow?'CÓ':'KHÔNG'} · Forecast ${cards} ngày · Bảng ${rows} giờ · Theme ${doc.documentElement.dataset.weather}`;
+  }
+  document.getElementById('run').addEventListener('click',run);
+  document.getElementById('inspect').addEventListener('click',inspect);
+  document.getElementById('width').addEventListener('change',()=>{frame.style.width=document.getElementById('width').value+'px';});
+  run();
+</script>
+</html>

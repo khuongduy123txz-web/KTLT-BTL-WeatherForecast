@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="vi" data-type="software" data-weather="cloudy" class="theme-cloudy">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="page-type" content="software">
+  <meta name="site-kind" content="software">
+  <meta name="theme-color" content="#eef0f3">
+  <meta name="description" content="Theo dõi thời tiết, chất lượng không khí, biểu đồ 24 giờ và dự báo 7 ngày tại thành phố của bạn.">
+  <meta property="og:title" content="Weather & Air — Thời tiết và chất lượng không khí">
+  <meta property="og:description" content="Thời tiết hiện tại, AQI và dự báo 7 ngày trong cùng một bảng điều khiển.">
+  <meta property="og:type" content="website">
+  <meta name="color-scheme" content="light">
+  <title>Weather & Air | Thời tiết và chất lượng không khí</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="vendor/chart.umd.js" defer></script>
+  <script src="script.js" type="module"></script>
+</head>
+<body>
+  <!-- Application layout: the real dashboard is the product, rather than a marketing hero.
+       Design system: cool-grey-cobalt / Outfit; native scrolling forecast is required by the brief. -->
+  <a class="skip-link" href="#main">Chuyển đến nội dung</a>
+  <aside class="sidebar" aria-label="Điều hướng ứng dụng">
+    <a class="brand" href="#main" aria-label="Weather and Air, về tổng quan">
+      <img src="assets/favicon.svg" alt="" width="38" height="38">
+      <span>weather<span class="brand-air">& air</span></span>
+    </a>
+    <p class="sidebar-label">Không gian của bạn</p>
+    <nav class="nav-links" aria-label="Các phần dữ liệu">
+      <a class="nav-link active" href="#overview"><svg aria-hidden="true"><use href="assets/ui-icons.svg#grid"></use></svg>Tổng quan</a>
+      <a class="nav-link" href="#hourly"><svg aria-hidden="true"><use href="assets/ui-icons.svg#chart"></use></svg>Xu hướng 24 giờ</a>
+      <a class="nav-link" href="#forecast"><svg aria-hidden="true"><use href="assets/ui-icons.svg#calendar"></use></svg>Dự báo 7 ngày</a>
+    </nav>
+    <div class="sidebar-cities">
+      <p class="sidebar-label">Thành phố Việt Nam</p>
+      <div id="quick-cities" class="city-links"></div>
+    </div>
+    <div class="sidebar-bottom">
+      <svg class="sidebar-orbit" viewBox="0 0 160 100" aria-hidden="true"><ellipse cx="80" cy="52" rx="68" ry="25" fill="none" stroke="currentColor" transform="rotate(-25 80 52)"/><ellipse cx="80" cy="52" rx="68" ry="25" fill="none" stroke="currentColor" transform="rotate(25 80 52)"/><circle cx="80" cy="52" r="23" fill="currentColor" opacity=".12"/><circle cx="80" cy="52" r="8" fill="currentColor"/></svg>
+      <p>Thời tiết nơi bạn sống.</p>
+      <span>Thời tiết · Không khí · Dự báo</span>
+    </div>
+  </aside>
+
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="topbar-heading"><span class="status-dot" aria-hidden="true"></span><span>Weather & Air</span></div>
+      <div class="topbar-actions">
+        <div class="unit-switch" role="group" aria-label="Đơn vị nhiệt độ">
+          <button type="button" data-unit="C" aria-pressed="true" aria-label="Độ C">°C</button>
+          <button type="button" data-unit="F" aria-pressed="false" aria-label="Độ F">°F</button>
+        </div>
+        <span class="project-label">AC2010 / 2026.1</span>
+      </div>
+    </header>
+
+    <main id="main" tabindex="-1">
+      <section id="overview" aria-labelledby="page-heading" data-enter>
+        <div class="page-heading">
+          <div><p class="eyebrow" id="local-date">Thời tiết và chất lượng không khí</p><h1 id="page-heading">Thời tiết hôm nay<span class="heading-dot">.</span></h1></div>
+          <button class="button button-light" id="refresh-button" type="button" aria-label="Làm mới dữ liệu"><svg aria-hidden="true"><use href="assets/ui-icons.svg#refresh"></use></svg><span>Làm mới dữ liệu</span></button>
+        </div>
+
+        <div class="location-toolbar">
+          <form id="search-form" class="search-form" role="search" novalidate>
+            <label for="city-input">Tìm theo tên thành phố</label>
+            <div class="search-control">
+              <svg aria-hidden="true"><use href="assets/ui-icons.svg#search"></use></svg>
+              <input id="city-input" name="city" type="search" placeholder="Hà Nội, London, Tokyo…" autocomplete="off" minlength="2" maxlength="100" aria-describedby="search-feedback" aria-controls="search-results">
+              <button type="submit" id="search-button">Tìm thành phố<svg aria-hidden="true"><use href="assets/ui-icons.svg#arrow"></use></svg></button>
+            </div>
+            <p id="search-feedback" class="field-feedback" role="status" aria-live="polite"></p>
+            <div id="search-results" class="search-results" hidden></div>
+          </form>
+          <button class="button button-location" id="location-button" type="button"><svg aria-hidden="true"><use href="assets/ui-icons.svg#location"></use></svg><span>Dùng vị trí của tôi</span></button>
+        </div>
+
+        <div id="notice" class="notice" role="status" aria-live="polite" hidden><svg aria-hidden="true"><use href="assets/ui-icons.svg#info"></use></svg><p id="notice-text"></p><button id="retry-button" type="button" hidden>Thử lại</button></div>
+        <div class="data-meta"><span id="data-status">Đang kết nối dữ liệu thời tiết…</span><span id="city-clock">—</span></div>
+
+        <div id="dashboard" aria-busy="true">
+          <div class="overview-grid">
+            <article class="current-card panel" aria-labelledby="current-heading">
+              <div class="current-top"><div><p class="card-label">Thời tiết hiện tại</p><h2 id="current-heading">Đang tải địa điểm…</h2><p id="location-subtitle" class="location-subtitle">Dữ liệu từ Open-Meteo</p></div><span class="weather-tag" id="weather-tag">Đang cập nhật</span></div>
+              <div class="weather-main"><div class="temperature-block"><p class="current-temperature"><span id="current-temperature">—</span><span class="temperature-unit" id="current-unit">°C</span></p><p id="weather-description" class="weather-description">Chờ dữ liệu thời tiết</p><p class="feels-like">Cảm giác như <strong id="feels-like">—</strong></p></div><svg class="weather-art" role="img" aria-label="Biểu tượng điều kiện thời tiết" id="current-icon"><use href="assets/weather.svg#cloud"></use></svg></div>
+              <div class="current-bottom"><span><svg aria-hidden="true"><use href="assets/ui-icons.svg#rise"></use></svg>Bình minh <strong id="sunrise">—</strong></span><span><svg aria-hidden="true"><use href="assets/ui-icons.svg#set"></use></svg>Hoàng hôn <strong id="sunset">—</strong></span><span class="high-low" id="high-low">Cao — / Thấp —</span></div>
+            </article>
+
+            <article class="air-card panel" aria-labelledby="air-heading">
+              <div class="panel-heading"><h2 id="air-heading">Chất lượng không khí</h2><span class="subtle-pill">US AQI</span></div>
+              <div class="aqi-visual"><svg class="aqi-gauge" viewBox="0 0 240 142" role="img" aria-labelledby="aqi-gauge-title"><title id="aqi-gauge-title">Chỉ số chất lượng không khí</title><path class="gauge-track" d="M28 120 A92 92 0 0 1 212 120" pathLength="100"/><path id="aqi-arc" class="gauge-value" d="M28 120 A92 92 0 0 1 212 120" pathLength="100"/><circle id="aqi-marker" cx="28" cy="120" r="6" fill="white" stroke="currentColor" stroke-width="3"/><text id="aqi-number" x="120" y="102" text-anchor="middle">—</text><text class="gauge-unit" x="120" y="126" text-anchor="middle">Chỉ số US AQI</text></svg></div>
+              <p class="aqi-category" id="aqi-category">Đang tải không khí</p>
+              <div class="pollutants"><div><span>PM2.5 <small>µg/m³</small></span><strong id="pm25">—</strong></div><div><span>PM10 <small>µg/m³</small></span><strong id="pm10">—</strong></div></div>
+              <p class="air-note" id="air-note">AQI được cập nhật theo dữ liệu mô hình.</p>
+              <details class="aqi-explainer"><summary>Đọc thang US AQI</summary><p>0–50: Tốt · 51–100: Trung bình · 101–150: Kém với nhóm nhạy cảm · 151–200: Không lành mạnh · 201–300: Rất không lành mạnh · Trên 300: Nguy hại. Chỉ số dùng để tham khảo chất lượng không khí, không phải số đo trạm tại chỗ.</p></details>
+            </article>
+          </div>
+
+          <div class="metrics-grid">
+            <article class="metric-card panel"><span class="metric-icon humidity-icon"><svg aria-hidden="true"><use href="assets/ui-icons.svg#drop"></use></svg></span><div><h3>Độ ẩm</h3><p><strong id="humidity">—</strong><span>%</span></p></div><span class="metric-caption">Độ ẩm tương đối</span></article>
+            <article class="metric-card panel"><span class="metric-icon wind-icon"><svg aria-hidden="true"><use href="assets/ui-icons.svg#wind"></use></svg></span><div><h3>Tốc độ gió</h3><p><strong id="wind-speed">—</strong><span>km/h</span></p></div><span class="metric-caption" id="wind-direction">Hướng gió —</span></article>
+            <article class="metric-card panel"><span class="metric-icon pressure-icon"><svg aria-hidden="true"><use href="assets/ui-icons.svg#pressure"></use></svg></span><div><h3>Áp suất</h3><p><strong id="pressure">—</strong><span>hPa</span></p></div><span class="metric-caption">Tại mặt đất</span></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="chart-panel panel" id="hourly" aria-labelledby="hourly-heading">
+        <div class="section-heading"><div><p class="card-label">Theo giờ địa phương</p><h2 id="hourly-heading">Xu hướng 24 giờ tới</h2></div><div class="chart-switch" role="group" aria-label="Chọn dữ liệu biểu đồ"><button type="button" data-metric="both" aria-pressed="true">Cả hai</button><button type="button" data-metric="temperature" aria-pressed="false">Nhiệt độ</button><button type="button" data-metric="humidity" aria-pressed="false">Độ ẩm</button></div></div>
+        <div class="chart-legend"><span><i class="legend-temperature"></i><span id="temperature-legend">Nhiệt độ (°C)</span></span><span><i class="legend-humidity"></i>Độ ẩm (%)</span><span id="chart-timezone" class="chart-timezone">Đang chờ dữ liệu</span></div>
+        <div class="chart-container"><canvas id="hourly-chart" role="img" aria-label="Biểu đồ nhiệt độ và độ ẩm trong 24 giờ tới. Dữ liệu dạng bảng ở ngay dưới."></canvas><p id="chart-placeholder" class="chart-placeholder">Biểu đồ sẽ xuất hiện khi tải xong dữ liệu.</p></div>
+        <div class="chart-foot"><span>Di chuột hoặc chạm để xem từng giờ</span><span id="hourly-range">—</span></div>
+        <details class="hourly-table"><summary>Xem bảng số liệu 24 giờ</summary><div class="table-scroll"><table><caption id="hourly-caption">Nhiệt độ và độ ẩm theo giờ địa phương</caption><thead><tr><th scope="col">Ngày và giờ</th><th scope="col" id="table-temperature-unit">Nhiệt độ (°C)</th><th scope="col">Độ ẩm (%)</th></tr></thead><tbody id="hourly-table-body"></tbody></table></div></details>
+      </section>
+
+      <section id="forecast" class="forecast-section" aria-labelledby="forecast-heading">
+        <div class="section-heading"><div><p class="card-label">Kế hoạch cho tuần mới</p><h2 id="forecast-heading">Dự báo 7 ngày</h2></div><div class="forecast-controls"><button type="button" id="forecast-prev" aria-label="Cuộn dự báo về trước"><svg aria-hidden="true"><use href="assets/ui-icons.svg#chevron-left"></use></svg></button><button type="button" id="forecast-next" aria-label="Cuộn dự báo về sau"><svg aria-hidden="true"><use href="assets/ui-icons.svg#chevron-right"></use></svg></button></div></div>
+        <div class="forecast-rail" id="forecast-rail" tabindex="0" role="region" aria-label="Dự báo 7 ngày, vuốt hoặc dùng phím mũi tên để cuộn"><p class="empty-forecast">Đang chờ dự báo 7 ngày…</p></div>
+        <div class="forecast-key"><span><svg aria-hidden="true"><use href="assets/ui-icons.svg#drop"></use></svg>Xác suất mưa cao nhất trong ngày</span><span>Nhiệt độ cao nhất / thấp nhất</span></div>
+      </section>
+
+      <footer class="footer"><p>Dữ liệu mô hình: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> · <a href="https://atmosphere.copernicus.eu/" target="_blank" rel="noopener noreferrer">CAMS</a> · Địa danh: <a href="https://www.geonames.org/" target="_blank" rel="noopener noreferrer">GeoNames</a></p><p>Tự làm mới mỗi 10 phút khi mở trang</p></footer>
+    </main>
+  </div>
+  <noscript><p class="noscript-message">Bật JavaScript trong trình duyệt để tải thời tiết, AQI và biểu đồ.</p></noscript>
+</body>
+</html>

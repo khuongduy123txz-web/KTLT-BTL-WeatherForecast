@@ -1,0 +1,35 @@
+✔ HTTP 429 retains Retry-After for caller backoff (6.601733ms)
+✔ HTTP access failure and server failure give explicit messages (1.167449ms)
+✔ invalid JSON and API error objects are rejected (3.206875ms)
+✔ network failure is not confused with invalid city (0.745544ms)
+✔ request timeout aborts fetch and provides a recoverable error (11.933979ms)
+✔ caller cancellation stays AbortError instead of a user-facing error (0.874377ms)
+✔ city search encodes query and rejects nonexistent cities (1.50309ms)
+✔ weather and AQI are initiated concurrently using Promise.all (27.010077ms)
+✔ AQI outage preserves the successful weather response (2.465077ms)
+✔ malformed weather is a failure even if HTTP was successful (1.19465ms)
+✔ geolocation denial explains how to continue with city search (1.227356ms)
+✔ geolocation requires a secure context (0.41252ms)
+✔ null, strings and NaN are not measurements (1.710067ms)
+✔ temperature conversion preserves zero, negatives and missing data (0.278808ms)
+✔ coordinates respect both geographic bounds and data types (0.272047ms)
+✔ all US AQI boundaries and unavailable values (0.222183ms)
+✔ sun, rain, snow, night and unknown WMO codes select usable themes (0.198004ms)
+✔ hourly window starts in the future and contains exactly 24 instants (0.727032ms)
+✔ missing hourly measurements remain null rather than zero (0.228972ms)
+✔ short or malformed hourly series are rejected (0.509462ms)
+✔ weather response requires forecast and valid timezone (18.415655ms)
+✔ AQI uses latest non-future hour and preserves absent pollutants (0.480195ms)
+✔ stale AQI and all-future AQI are rejected (0.295576ms)
+✔ location time uses destination timezone including daylight saving (0.507075ms)
+✔ valid cache survives serialization and old cache expires (20.345803ms)
+✔ corrupt JSON and malformed cache are ignored safely (0.900694ms)
+✔ blocked browser storage does not crash loading or unit controls (0.688158ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 216.944735

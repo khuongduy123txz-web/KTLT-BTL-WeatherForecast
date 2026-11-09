@@ -1,0 +1,12 @@
+{
+  "name": "weather-air-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "AC2010 — Real-Time Weather & Air Quality Dashboard",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=20" }
+}
